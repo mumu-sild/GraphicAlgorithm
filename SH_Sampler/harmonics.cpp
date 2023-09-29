@@ -15,42 +15,53 @@ Harmonics::Harmonics(std::array<std::string, 6> vImageFilenames)
 		cv::Mat img = cv::imread(vImageFilenames[i]);
 		if (!img.data)
 			throw std::runtime_error("read image failed: " + vImageFilenames[i]);
-		img.convertTo(m_Images[i], CV_32FC3, 1.0 / 255.0);
+		img.convertTo(m_Images[i], CV_32FC3, 1.0 / 255.0);//32f*3通道 保存区间【0,1】
 	}
 }
 
-void Harmonics::Evaluate()
+void Harmonics::Evaluate()//求值
 {
 	m_Coefs = vector<glm::vec3>(m_Degree, glm::vec3());
-	int w = m_Images[0].cols;
-	int h = m_Images[0].rows;
+	
+	//6张图
 	for (int k = 0; k < 6; k++)
 	{
 		cv::Mat img = m_Images[k];
+		int w = m_Images[k].cols;
+		int h = m_Images[k].rows;
+		//逐像素
 		for (int j = 0; j < w; j++)
 		{
 			for (int i = 0; i < h; i++)
 			{
+				// 像素点位置
 				float px = (float)i + 0.5;
 				float py = (float)j + 0.5;
+				// 像素点UV 【-1,1】：以摄像机正对位置的（0，0）
 				float u = 2.0 * (px / (float)w) - 1.0;
 				float v = 2.0 * (py / (float)h) - 1.0;
+				// 像素间UV的一半的偏移量
 				float d_x = 1.0 / (float)w;
+				// (x0,y0)像素左下角 (x1,y1)像素右上角
 				float x0 = u - d_x;
 				float y0 = v - d_x;
 				float x1 = u + d_x;
 				float y1 = v + d_x;
+				// 计算Cubemap的一个像素对应的立体角的大小
 				float d_a = surfaceArea(x0, y0) - surfaceArea(x0, y1) - surfaceArea(x1, y0) + surfaceArea(x1, y1);
+				// 纹理像素点 转化为 世界坐标点
 				u = (float)j / (img.cols - 1);
 				v = 1.0f - (float)i / (img.rows - 1);
-
 				glm::vec3 p = CubeUV2XYZ({ k, u, v });
+				// 获取当前像素颜色
 				auto c = img.at<cv::Vec3f>(i, j);
-				glm::vec3 color = { c[2] * d_a, c[1] * d_a,c[0] * d_a };
+				glm::vec3 color = {c[2], c[1], c[0]};
+				// 得到基函数计算结果列表
 				vector<float> Y = Basis(p);
+				// 计算系数
 				for (int i = 0; i < m_Degree; i++)
 				{
-					m_Coefs[i] = m_Coefs[i] + Y[i] * color;
+					m_Coefs[i] = m_Coefs[i] + Y[i] * color * d_a;
 				}
 			}
 		}
@@ -87,6 +98,7 @@ cv::Mat Harmonics::RenderCubemap(int width, int height)
 		}
 	}
 
+	// 将天空盒输出到一张图上
 	int xarr[6] = { 2 * width, 0, width, width, width, 3 * width };
 	int yarr[6] = { height, height, 0, 2 * height, height, height };
 	cv::Mat expandimg(3 * height, 4 * width, CV_32FC3);
@@ -101,6 +113,8 @@ cv::Mat Harmonics::RenderCubemap(int width, int height)
 	return expandimg;
 }
 
+
+// 对光照做旋转？
 vector<float> Harmonics::RenderBasis(const glm::vec3& pos)
 {
 	vector<float> Y(m_Degree);
@@ -109,17 +123,17 @@ vector<float> Harmonics::RenderBasis(const glm::vec3& pos)
 	float y = normal.y;
 	float z = normal.z;
 
-	if (m_Degree >= 0)
+	if (m_Degree >= 1)
 	{
 		Y[0] = 1.f / 2.f * sqrt(1.f / PI);
 	}
-	if (m_Degree >= 1)
+	if (m_Degree >= 4)
 	{
 		Y[1] = 2.0 / 3.0 *sqrt(3.f / (4.f * PI)) * z;
 		Y[2] = 2.0 / 3.0 *sqrt(3.f / (4.f * PI)) * y;
 		Y[3] = 2.0 / 3.0 *sqrt(3.f / (4.f * PI)) * x;
 	}
-	if (m_Degree >= 2)
+	if (m_Degree >= 9)
 	{
 		Y[4] = 1.0 / 4.0 *1.f / 2.f * sqrt(15.f / PI) * x * z;
 		Y[5] = 1.0 / 4.0 *1.f / 2.f * sqrt(15.f / PI) * z * y;
@@ -132,23 +146,23 @@ vector<float> Harmonics::RenderBasis(const glm::vec3& pos)
 
 vector<float> Harmonics::Basis(const glm::vec3& pos)
 {
-	vector<float> Y(m_Degree);
+	vector<float> Y(m_Degree);//m_Degree 基函数个数 
 	glm::vec3 normal = glm::normalize(pos);
 	float x = normal.x;
 	float y = normal.y;
 	float z = normal.z;
 
-	if (m_Degree >= 0)
-	{
-		Y[0] = 1.f / 2.f * sqrt(1.f / PI);
-	}
 	if (m_Degree >= 1)
+	{
+		Y[0] = 1.f / 2.f * sqrt(1.f / PI); 
+	}
+	if (m_Degree >= 4)
 	{
 		Y[1] = sqrt(3.f / (4.f * PI)) * z;
 		Y[2] = sqrt(3.f / (4.f * PI)) * y;
 		Y[3] = sqrt(3.f / (4.f * PI)) * x;
 	}
-	if (m_Degree >= 2)
+	if (m_Degree >= 9)
 	{
 		Y[4] = 1.f / 2.f * sqrt(15.f / PI) * x * z;
 		Y[5] = 1.f / 2.f * sqrt(15.f / PI) * z * y;
@@ -156,7 +170,7 @@ vector<float> Harmonics::Basis(const glm::vec3& pos)
 		Y[7] = 1.f / 2.f * sqrt(15.f / PI) * y * x;
 		Y[8] = 1.f / 4.f * sqrt(15.f / PI) * (x * x - z * z);
 	}
-	if (m_Degree >= 3)
+	if (m_Degree >= 16)
 	{
 		Y[9]  = 1.f / 4.f * sqrt(35.f / (2.f * PI)) * (3 * x * x - z * z) * z;
 		Y[10] = 1.f / 2.f * sqrt(105.f / PI) * x * z * y;

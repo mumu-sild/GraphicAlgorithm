@@ -11,7 +11,6 @@
 #include <fstream>
 #include "SkyboxPass.h"
 
-
 CSkyboxPass::CSkyboxPass(const std::string& vPassName, int vExcutionOrder) :IRenderPass(vPassName, vExcutionOrder)
 {
 }
@@ -33,7 +32,10 @@ void CSkyboxPass::initV()
 		"front.jpg",
 		"back.jpg"
 	};
-	m_pShader = std::make_shared<CShader>("Skybox_VS.glsl", "Skybox_FS.glsl");
+
+	m_pShader = std::make_shared<CShader>(
+		std::string("Skybox_VS.glsl"),//C:/Users/mumu/Desktop/graphics/paper/GraphicAlgorithm/009_Spherical Harmonic Lighting The Gritty Details/
+		std::string("Skybox_FS.glsl"));
 	auto Texture = std::make_shared<ElayGraphics::STexture>();
 	Texture->Type4WrapR = Texture->Type4WrapS = Texture->Type4WrapT = GL_CLAMP_TO_EDGE;
 	Texture->Type4MinFilter = Texture->Type4MagFilter = GL_LINEAR;

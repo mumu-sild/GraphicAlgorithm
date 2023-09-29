@@ -31,7 +31,7 @@ void CShadingPass::initV()
 	ElayGraphics::Camera::setMainCameraFarPlane(100);
 	ElayGraphics::Camera::setMainCameraPos({ -1.57278, 0.244948, 0.367194 });
 	ElayGraphics::Camera::setMainCameraFront({ 0.967832, -0.112856, -0.224865 });
-	ElayGraphics::Camera::setMainCameraMoveSpeed(0.1);
+	ElayGraphics::Camera::setMainCameraMoveSpeed(0.5);
 	m_pShader = std::make_shared<CShader>("Sponza_VS.glsl", "Sponza_FS.glsl");
 	m_pSponza = std::dynamic_pointer_cast<CSponza>(ElayGraphics::ResourceManager::getGameObjectByName("Sponza"));
 	m_pShader->activeShader();

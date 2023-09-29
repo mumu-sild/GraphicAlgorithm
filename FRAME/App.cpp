@@ -29,13 +29,16 @@ CApp::~CApp()
 GLvoid CApp::init()
 {
 	CResourceManager::getOrCreateInstance()->fetchOrCreateGLFWWindow()->init();
+	
 	m_pWindow = CResourceManager::getOrCreateInstance()->fetchOrCreateGLFWWindow()->fetchWindow();
 	m_pResourceManager = CResourceManager::getOrCreateInstance();
+	
 	m_pResourceManager->init();
 	m_pResourceManager->getOrCreateMainGUI()->init();
 	m_pResourceManager->fecthOrCreateMainCamera()->init();
 	CInputManager::getOrCreateInstance()->init();
 	m_pResourceManager->fetchOrCreateUBO4ProjectionWorld()->init();
+	
 
 	for (auto &vItem : m_pResourceManager->getSubGUISet())
 	{

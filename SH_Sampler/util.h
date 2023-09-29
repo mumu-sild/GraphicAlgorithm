@@ -56,8 +56,25 @@ inline glm::vec3 CubeUV2XYZ(const CubeUV& c)
 	return glm::vec3();
 }
 
+/*
+* 原理：
+* 1. 计算平面上一点(x,y,1)投影到球面上后的坐标p'。
+* 	p' = (x,y,1)/sqrt(x^2+y^2+1);
+*
+* 2. p'关于x方向和y方向的方向导数，两个方向导数叉乘的模长即为微面元的面积。
+* 	得到dA = 1/[(x^2+y^2+1)^{3/2}]-----过程很复杂，结果很简单
+*
+* 3. 对微面元积分，求得（0,0,1）- (x,y,1)对应四边形的投影面积(立体角)，
+*    然后利用这个公式就能求得一个像素的立体角。
+*	 f(x,y) = tan^{-1}{xy/sqrt(x^2+y^2+1)} 
+* 
+* 总结：公式即为计算f(x,y) = tan^{-1}{xy/sqrt(x^2+y^2+1)} 的值
+* 
+* 疑问？：不会是负值吗？
+*/
 static double surfaceArea(double x, double y)
 {
+	//atan2(y,x)：返回（x,y）到(1,0)的夹角【弧度】
 	return atan2(x * y, sqrt(x * x + y * y + 1.0));
 }
 

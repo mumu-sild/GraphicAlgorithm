@@ -11,7 +11,9 @@ CHalfCornellBox::~CHalfCornellBox()
 
 void CHalfCornellBox::initV()
 {
-	setModel(ElayGraphics::ResourceManager::getOrCreateModel("../Model/sponza/sponza.obj"));//../Model/CornellBox/HalfCornell/HalfCornell.obj
+	setModel(ElayGraphics::ResourceManager::getOrCreateModel("../Model/sponza/sponza.obj"));
+	//../Model/CornellBox/HalfCornell/HalfCornell.obj
+	//../Model/sponza/sponza.obj
 }
 
 void CHalfCornellBox::updateV()

@@ -2,7 +2,8 @@
 
 in  vec3 v2f_FragPosInViewSpace;
 in  vec2 v2f_TexCoords;
-in  vec3 v2f_Normal;
+in  vec3 v2f_ViewSpaceNormal;
+in  vec3 v2f_WorldSpaceNormal;
 
 layout (location = 0) out vec4 Albedo_;
 
@@ -19,43 +20,51 @@ vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 
 void main()
 {	
-	if((abs(v2f_Normal.x) < 0.0001f) && (abs(v2f_Normal.y) < 0.0001f) && (abs(v2f_Normal.z) < 0.0001f))
+	if((abs(v2f_ViewSpaceNormal.x) < 0.0001f) && (abs(v2f_ViewSpaceNormal.y) < 0.0001f) && (abs(v2f_ViewSpaceNormal.z) < 0.0001f))
 	{
 		Albedo_ = vec4(0, 0, 0, 1);
 		return;
 	}
 
 	float Basis[9];
-	float x = v2f_Normal.x;
-	float y = v2f_Normal.y;
-	float z = v2f_Normal.z;
+	float x = v2f_WorldSpaceNormal.x;
+	float y = v2f_WorldSpaceNormal.y;
+	float z = v2f_WorldSpaceNormal.z;
 	float x2 = x * x;
 	float y2 = y * y;
 	float z2 = z * z;
     
+	//这里所有系数应该为乘PI------------------个人认为
     Basis[0] = 1.f / 2.f * sqrt(1.f / PI);
-    Basis[1] = 2.0 / 3.0 * sqrt(3.f / (4.f * PI)) * z;
-    Basis[2] = 2.0 / 3.0 * sqrt(3.f / (4.f * PI)) * y;
-    Basis[3] = 2.0 / 3.0 * sqrt(3.f / (4.f * PI)) * x;
-    Basis[4] = 1.0 / 4.0 * 1.f / 2.f * sqrt(15.f / PI) * x * z;
-    Basis[5] = 1.0 / 4.0 * 1.f / 2.f * sqrt(15.f / PI) * z * y;
-    Basis[6] = 1.0 / 4.0 * 1.f / 4.f * sqrt(5.f / PI) * (-x2 - z2 + 2 * y2);
-    Basis[7] = 1.0 / 4.0 * 1.f / 2.f * sqrt(15.f / PI) * y * x;
-    Basis[8] = 1.0 / 4.0 * 1.f / 4.f * sqrt(15.f / PI) * (x2 - z2);
+    Basis[1] = 2.0 / 3.0 * sqrt(3.f / 4.f * PI) * z;
+    Basis[2] = 2.0 / 3.0 * sqrt(3.f / 4.f * PI) * y;
+    Basis[3] = 2.0 / 3.0 * sqrt(3.f / 4.f * PI) * x;
+	
+    Basis[4] = 1.0 / 4.0 * 1.f / 2.f * sqrt(15.f * PI) * x * z;
+    Basis[5] = 1.0 / 4.0 * 1.f / 2.f * sqrt(15.f * PI) * z * y;
+    Basis[6] = 1.0 / 4.0 * 1.f / 4.f * sqrt(5.f * PI) * (-x2 - z2 + 2 * y2);
+    Basis[7] = 1.0 / 4.0 * 1.f / 2.f * sqrt(15.f * PI) * y * x;
+    Basis[8] = 1.0 / 4.0 * 1.f / 4.f * sqrt(15.f * PI) * (x2 - z2);
 
 	vec3 Diffuse = vec3(0,0,0);
-	for (int i = 0; i < 9; i++)
-		Diffuse += u_Coef[i] * Basis[i];
-
 
 	vec3 F0 = vec3(0.2,0.2,0.2);
-	float Roughness = 0.2;
-	vec3 N = normalize(v2f_Normal);
+	float Roughness = 0.5;
+	vec3 N = normalize(vec4(v2f_ViewSpaceNormal,1.0f)).xyz;//viewMatrix * 
 	vec3 V = -normalize(v2f_FragPosInViewSpace);
 	vec3 R = reflect(-V, N); 
-	vec3 F        = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, Roughness);
+	F0        = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, Roughness);
 	vec2 EnvBRDF  = texture(u_BRDFLut, vec2(max(dot(N, V), 0.0), Roughness)).rg;
-	vec3 LUT = (F * EnvBRDF.x + EnvBRDF.y);
+	vec3 LUT = (F0 * EnvBRDF.x + EnvBRDF.y);
+
+	for (int i = 0; i < 9; i++)
+		Diffuse += u_Coef[i] * Basis[i] * (1-LUT);
+
+	//Albedo_ = vec4(Diffuse ,1.0);
+	//return ;
+	//Albedo_ = vec4(LUT,1.0);
+	//Albedo_ = vec4(dot(N, V),dot(N, V),dot(N, V),1.0);
+	//return ;
 
 	x = R.x;
 	y = R.y;
@@ -78,5 +87,5 @@ void main()
 		Specular += u_Coef[i] * Basis[i];
 
 
-	Albedo_ = vec4(1 * Diffuse + 1.0 * Specular * LUT,1.0);
+	Albedo_ = vec4(1.0 * Specular * LUT,0.0);//1 * 
 }

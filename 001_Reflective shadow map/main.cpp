@@ -7,7 +7,7 @@
 
 int main()
 {
-	ElayGraphics::WINDOW_KEYWORD::setWindowSize(1920, 1152);
+	ElayGraphics::WINDOW_KEYWORD::setWindowSize(1920, 960);
 	ElayGraphics::WINDOW_KEYWORD::setIsCursorDisable(true);
 	ElayGraphics::COMPONENT_CONFIG::setIsEnableGUI(false);
 

@@ -12,8 +12,9 @@ layout(std140, binding = 0) uniform u_Matrices4ProjectionWorld
 uniform mat4 u_ModelMatrix;
 
 out vec2 v2f_TexCoords;
-out vec3 v2f_Normal;
+out vec3 v2f_ViewSpaceNormal;
 out vec3 v2f_FragPosInViewSpace;
+out vec3 v2f_WorldSpaceNormal;
 
 void main()
 {
@@ -21,6 +22,10 @@ void main()
 	vec4 FragPosInViewSpace = u_ViewMatrix * u_ModelMatrix * vec4(_Position, 1.0f);
 	gl_Position = u_ProjectionMatrix * FragPosInViewSpace;
 	v2f_TexCoords = _TexCoord;
-	v2f_Normal =  normalize(mat3(transpose(inverse(u_ViewMatrix * u_ModelMatrix))) * _Normal);
+	// 视口矩阵下的normal？？？？ // 删掉了 u_ViewMatrix * 
+	v2f_WorldSpaceNormal = normalize(mat3(transpose(inverse(u_ModelMatrix))) * _Normal);
+	// 不能直接在转置后的v2f_WorldSpaceNormal上乘以u_ViewMatrix！！！WHY？
+	v2f_ViewSpaceNormal =  normalize(mat3(transpose(inverse(u_ViewMatrix * u_ModelMatrix))) * _Normal);
 	v2f_FragPosInViewSpace = vec3(FragPosInViewSpace);
+	
 }

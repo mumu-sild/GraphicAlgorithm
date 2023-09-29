@@ -24,7 +24,7 @@ CShadingPass::~CShadingPass()
 //Function:
 void CShadingPass::initV()
 {
-	//1
+	//1 
 	auto Texture1 = std::make_shared<ElayGraphics::STexture>();
 	Texture1->Type4WrapR = Texture1->Type4WrapS = Texture1->Type4WrapT = GL_CLAMP_TO_EDGE;
 	Texture1->Type4MinFilter = Texture1->Type4MagFilter = GL_LINEAR;
@@ -69,13 +69,19 @@ void CShadingPass::initV()
 	}
 	loadCubeTextureFromFile(p3, Texture3);
 
+
+	// LUTTexture
 	auto m_LUTTexture = std::make_shared<ElayGraphics::STexture>();
 	loadTextureFromFile("../Textures/BRDFLUT/BRDFLut.dds", m_LUTTexture);
+
+	//获取系数
 	getCoefs();
+
 	ElayGraphics::Camera::setMainCameraFarPlane(100);
 	ElayGraphics::Camera::setMainCameraPos({ -1.57278, 0.244948, 0.367194 });
 	ElayGraphics::Camera::setMainCameraFront({ 0.967832, -0.112856, -0.224865 });
 	ElayGraphics::Camera::setMainCameraMoveSpeed(0.1);
+
 	m_pShader = std::make_shared<CShader>("Sponza_VS.glsl", "Sponza_FS.glsl");
 	m_pSponza = std::dynamic_pointer_cast<CSponza>(ElayGraphics::ResourceManager::getGameObjectByName("Sponza"));
 	m_pShader->activeShader();

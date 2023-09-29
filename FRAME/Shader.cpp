@@ -9,6 +9,11 @@
 #include <sstream>
 #include <iostream>
 
+#define MAX_PATH 1024
+#include  <direct.h>  
+#include  <stdio.h> 
+char  buffer[MAX_PATH];
+
 CShader::CShader(const std::string& vVertexShaderFileName, const std::string& vFragmentShaderFileName, const std::string& vGeometryShaderFileName,
 	const std::string& vTessellationControlShaderFileName, const std::string& vTessellationEvaluationShaderFileName)
 {
@@ -73,7 +78,8 @@ GLint CShader::__loadShader(const std::string& vShaderFileName, GLint vShaderTyp
 	const GLchar *pShaderSource = ShaderSource.c_str();
 	_ASSERT(pShaderSource);
 	glShaderSource(Shader, 1, &pShaderSource, nullptr);
-	_ASSERT(__compileShader(Shader));
+	GLboolean isCompileShader =  __compileShader(Shader);
+	_ASSERT(isCompileShader);
 	_ASSERT(m_ShaderProgram);
 	glAttachShader(m_ShaderProgram, Shader);
 	return Shader;
@@ -86,6 +92,10 @@ std::string CShader::__loadShaderSourceFromFile(const std::string& vShaderFileNa
 	try
 	{
 		std::ifstream Fin(vShaderFileName);
+		if (!Fin.good()) {
+			getcwd(buffer, MAX_PATH);
+			std::cerr << "File Doesn't exist!----"<<std::string(buffer) + "/" + vShaderFileName << std::endl;
+		}
 		_ASSERT(Fin);
 		std::stringstream FinStream;
 		FinStream << Fin.rdbuf();
@@ -93,7 +103,9 @@ std::string CShader::__loadShaderSourceFromFile(const std::string& vShaderFileNa
 	}
 	catch(std::exception e)
 	{
-		std::cerr << "Error::Shader:: Read Shader File Failure: " << vShaderFileName << std::endl;
+		//获取相对地址
+		getcwd(buffer, MAX_PATH);
+		std::cerr << "Error::Shader:: Read Shader File Failure: " << buffer + vShaderFileName << std::endl;
 		return std::string();
 	}
 }
@@ -131,6 +143,7 @@ GLboolean CShader::__linkProgram() const
 	{
 		glGetProgramInfoLog(m_ShaderProgram, MaxInfoLogLength, nullptr, InfoLog);
 		std::cerr << "Error::Shader:: Shader Program Link Failure: " << InfoLog << std::endl;
+		
 		return GL_FALSE;
 	}
 	return GL_TRUE;

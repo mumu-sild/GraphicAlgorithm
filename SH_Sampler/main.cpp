@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 		dir.push_back('\\');
 	array<string, 6> faces = { "right", "left", "top", "bottom", "front", "back" };
 	array<std::string, 6> imgFiles;
-	string format = "png";
+	string format = "png";//jpg
 	for (int i = 0; i < 6; i++)
 		imgFiles[i] = dir + faces[i] + "." + format;
 	string outdir = dir;

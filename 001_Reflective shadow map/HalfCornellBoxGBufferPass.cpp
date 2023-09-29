@@ -17,8 +17,11 @@ CHalfCornellBoxGBufferPass::~CHalfCornellBoxGBufferPass()
 
 void CHalfCornellBoxGBufferPass::initV()
 {
+	// 设置Shader
 	m_pShader = std::make_shared<CShader>("HalfCornellBox_VS.glsl", "HalfCornellBox_FS.glsl");
 	m_pHalfCornellBox = std::dynamic_pointer_cast<CHalfCornellBox>(ElayGraphics::ResourceManager::getGameObjectByName("HalfCornellBox"));
+	
+	// 创建四个纹理
 	auto TextureConfig4Position = std::make_shared<ElayGraphics::STexture>();
 	auto TextureConfig4Normal = std::make_shared<ElayGraphics::STexture>();
 	auto TextureConfig4Albedo = std::make_shared<ElayGraphics::STexture>();
@@ -37,13 +40,16 @@ void CHalfCornellBoxGBufferPass::initV()
 	TextureConfig4Depth->TextureAttachmentType = ElayGraphics::STexture::ETextureAttachmentType::DepthTexture;
 	genTexture(TextureConfig4Depth);
 
+	// 将纹理与FBO绑定，设置为该FBO的渲染路径
 	m_FBO = genFBO({ TextureConfig4Albedo,TextureConfig4Normal,TextureConfig4Position,TextureConfig4Depth });
 
+	// 设置Shader中的名称与纹理绑定
 	ElayGraphics::ResourceManager::registerSharedData("AlbedoTexture", TextureConfig4Albedo);
 	ElayGraphics::ResourceManager::registerSharedData("NormalTexture", TextureConfig4Normal);
 	ElayGraphics::ResourceManager::registerSharedData("PositionTexture", TextureConfig4Position);
 	ElayGraphics::ResourceManager::registerSharedData("DepthTexture", TextureConfig4Depth);
 
+	// 设置Shader模型矩阵
 	m_pShader->activeShader();
 	m_pShader->setMat4UniformValue("u_ModelMatrix", glm::value_ptr(m_pHalfCornellBox->getModelMatrix()));
 	m_pHalfCornellBox->initModel(*m_pShader);
